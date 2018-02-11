@@ -78,7 +78,13 @@ class Wp_Config_Sync {
 		$this->set_locale();
 		$this->define_admin_hooks();
 		$this->define_public_hooks();
-
+		
+/* 		$file = WP_CONFIG_SYNC_PATH . '/test.yml';
+		try {
+			file_put_contents($file, $yaml, FILE_APPEND);
+		} catch(Exception $e) {
+			die($e->getMessage());
+		} */
 	}
 
 	/**

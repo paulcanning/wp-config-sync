@@ -1,0 +1,14 @@
+<?php
+/*
+Plugin Name: WP Config Sync
+Version: 0.0.1
+*/
+
+
+
+/* $delete_option_cmd = function( $args ) {
+	 WP_CLI::runcommand( 'plugin list --format=json' );
+};
+if ( class_exists( 'WP_CLI' ) ) {
+	WP_CLI::add_command( 'config-sync', $delete_option_cmd );
+} */

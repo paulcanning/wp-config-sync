@@ -79,28 +79,30 @@ class Wp_Config_Sync {
 		$this->define_admin_hooks();
 		$this->define_public_hooks();
 		
- 		//$file = WP_CONFIG_SYNC_PATH . '/test.yml';
-		
-/* 		$options = wp_load_alloptions();
-		$yaml = Spyc::YAMLDump($options, false, false, true);
-		try {
-			file_put_contents($file, $yaml, FILE_APPEND);
-		} catch(Exception $e) {
-			die($e->getMessage());
-		} */ 
-		
-		$foo = function( $args, $assoc_args ) {
+		$sync = function( $args, $assoc_args ) {
 			$file = WP_CONFIG_SYNC_PATH . '/config.yml';
 			switch($args[0]) {
 				case 'export':
 					WP_CLI::confirm( "Are you sure you want to export the config?", $assoc_args );
-					WP_CLI::success( 'Exporting config...' );
 					
 					$options = wp_load_alloptions();
-					$yaml = Spyc::YAMLDump($options, false, false, true);
+					
+					foreach( $options as $index => $value ) {
+						if (unserialize( $value )) {
+							$config[$index] = unserialize( $value );
+						} else {
+							$config[$index] = $value;
+						}
+					}
+					
+					$yaml = Symfony\Component\Yaml\Yaml::dump($config);
+					
+					//$spyc = new Spyc();
+					//$yaml = $spyc->YAMLDump($config, false, false, true);
 					
 					try {
 						file_put_contents($file, $yaml);
+						WP_CLI::success( 'Config exported!' );
 					} catch(Exception $e) {
 						WP_CLI::error( $e->getMessage() );
 					}
@@ -110,9 +112,18 @@ class Wp_Config_Sync {
 					WP_CLI::confirm( "Are you sure you want to import the config?", $assoc_args );
 					
 					$current_options = wp_load_alloptions();
-					$import_options = Spyc::YAMLLoad($file);
 					
-					$config_changes = array_diff( $import_options, $current_options );
+					$import_options = Symfony\Component\Yaml\Yaml::parseFile($file);
+										
+					foreach( $import_options as $index => $option ) {
+						if(is_array($option)) {							
+							$config[$index] = serialize($option);
+						} else {
+							$config[$index] = $option;
+						}
+					}
+					
+					$config_changes = array_diff( $config, $current_options );
 					
 					if( count( $config_changes ) > 0) {						
 						$progress = WP_CLI\Utils\make_progress_bar( 'Importing', count( $config_changes ) );
@@ -123,7 +134,6 @@ class Wp_Config_Sync {
 							if( update_option( $name, $value ) ) {
 								$progress->tick();
 							}
-						
 						}
 						
 						$progress->finish();
@@ -133,13 +143,13 @@ class Wp_Config_Sync {
 					
 					break;
 				default:
-					WP_CLI::error( 'No arguments supplied' );
+					WP_CLI::error( 'Invalid/No argument supplied' );
 					break;
 			}
 		};
 		
 		if ( class_exists( 'WP_CLI' ) ) {
-			WP_CLI::add_command( 'config-sync', $foo );
+			WP_CLI::add_command( 'config-sync', $sync );
 		}
 	}
 

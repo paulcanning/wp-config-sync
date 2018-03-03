@@ -79,12 +79,68 @@ class Wp_Config_Sync {
 		$this->define_admin_hooks();
 		$this->define_public_hooks();
 		
-/* 		$file = WP_CONFIG_SYNC_PATH . '/test.yml';
+ 		//$file = WP_CONFIG_SYNC_PATH . '/test.yml';
+		
+/* 		$options = wp_load_alloptions();
+		$yaml = Spyc::YAMLDump($options, false, false, true);
 		try {
 			file_put_contents($file, $yaml, FILE_APPEND);
 		} catch(Exception $e) {
 			die($e->getMessage());
-		} */
+		} */ 
+		
+		$foo = function( $args, $assoc_args ) {
+			$file = WP_CONFIG_SYNC_PATH . '/config.yml';
+			switch($args[0]) {
+				case 'export':
+					WP_CLI::confirm( "Are you sure you want to export the config?", $assoc_args );
+					WP_CLI::success( 'Exporting config...' );
+					
+					$options = wp_load_alloptions();
+					$yaml = Spyc::YAMLDump($options, false, false, true);
+					
+					try {
+						file_put_contents($file, $yaml);
+					} catch(Exception $e) {
+						WP_CLI::error( $e->getMessage() );
+					}
+					
+					break;
+				case 'import':
+					WP_CLI::confirm( "Are you sure you want to import the config?", $assoc_args );
+					
+					$current_options = wp_load_alloptions();
+					$import_options = Spyc::YAMLLoad($file);
+					
+					$config_changes = array_diff( $import_options, $current_options );
+					
+					if( count( $config_changes ) > 0) {						
+						$progress = WP_CLI\Utils\make_progress_bar( 'Importing', count( $config_changes ) );
+						
+						foreach($config_changes as $name => $value) {
+							WP_CLI::log( $name . ' ' . $value );
+						
+							if( update_option( $name, $value ) ) {
+								$progress->tick();
+							}
+						
+						}
+						
+						$progress->finish();
+					} else {
+						WP_CLI::success( 'All options are up-to-date.' );
+					}
+					
+					break;
+				default:
+					WP_CLI::error( 'No arguments supplied' );
+					break;
+			}
+		};
+		
+		if ( class_exists( 'WP_CLI' ) ) {
+			WP_CLI::add_command( 'config-sync', $foo );
+		}
 	}
 
 	/**

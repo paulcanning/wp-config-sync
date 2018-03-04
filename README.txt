@@ -26,5 +26,11 @@ a continuous integration deployment process.
 
 == Changelog ==
 
+= 1.0.2 =
+* Removed vendor folder from .gitignore
+
+= 1.0.1 =
+* Updated README
+
 = 1.0.0 =
 * Initial release

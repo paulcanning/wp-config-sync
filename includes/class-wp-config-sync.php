@@ -56,6 +56,14 @@ class Wp_Config_Sync {
 	 * @var      string    $version    The current version of the plugin.
 	 */
 	protected $version;
+	
+	protected $file;
+	
+	protected $options;
+	
+	protected $yaml;
+	
+	protected $config;
 
 	/**
 	 * Define the core functionality of the plugin.
@@ -79,29 +87,20 @@ class Wp_Config_Sync {
 		$this->define_admin_hooks();
 		$this->define_public_hooks();
 		
+		$this->options = new Wp_Config_Sync_Options();
+		$this->yaml = new Wp_Config_Sync_Yml();
+		$this->file = WP_CONFIG_SYNC_PATH . '/config.yml';
+		
 		$sync = function( $args, $assoc_args ) {
-			$file = WP_CONFIG_SYNC_PATH . '/config.yml';
 			switch($args[0]) {
 				case 'export':
 					WP_CLI::confirm( "Are you sure you want to export the config?", $assoc_args );
 					
-					$options = wp_load_alloptions();
-					
-					foreach( $options as $index => $value ) {
-						if (unserialize( $value )) {
-							$config[$index] = unserialize( $value );
-						} else {
-							$config[$index] = $value;
-						}
-					}
-					
-					$yaml = Symfony\Component\Yaml\Yaml::dump($config);
-					
-					//$spyc = new Spyc();
-					//$yaml = $spyc->YAMLDump($config, false, false, true);
-					
+					$export_options = $this->options->getOptions();
+					$this->config = $this->options->unserializeOptions( $export_options );
+
 					try {
-						file_put_contents($file, $yaml);
+						$this->yaml->dump( $this->config, $this->file );					
 						WP_CLI::success( 'Config exported!' );
 					} catch(Exception $e) {
 						WP_CLI::error( $e->getMessage() );
@@ -111,27 +110,17 @@ class Wp_Config_Sync {
 				case 'import':
 					WP_CLI::confirm( "Are you sure you want to import the config?", $assoc_args );
 					
-					$current_options = wp_load_alloptions();
-					
-					$import_options = Symfony\Component\Yaml\Yaml::parseFile($file);
-										
-					foreach( $import_options as $index => $option ) {
-						if(is_array($option)) {							
-							$config[$index] = serialize($option);
-						} else {
-							$config[$index] = $option;
-						}
-					}
-					
-					$config_changes = array_diff( $config, $current_options );
+					$import_options = $this->yaml->parse( $this->file );
+					$current_options = $this->options->getOptions();
+					$this->config = $this->options->serializeOptions( $import_options );
+					$config_changes = array_diff( $this->config, $current_options );
 					
 					if( count( $config_changes ) > 0) {						
-						$progress = WP_CLI\Utils\make_progress_bar( 'Importing', count( $config_changes ) );
+						$progress = WP_CLI\Utils\make_progress_bar( 'Importing config', count( $config_changes ) );
 						
 						foreach($config_changes as $name => $value) {
-							WP_CLI::log( $name . ' ' . $value );
-						
 							if( update_option( $name, $value ) ) {
+								WP_CLI::log( $name . ' updated: ' . $value );
 								$progress->tick();
 							}
 						}
@@ -193,6 +182,9 @@ class Wp_Config_Sync {
 		 * side of the site.
 		 */
 		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'public/class-wp-config-sync-public.php';
+		
+		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'includes/class-wp-config-sync-options.php';
+		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'includes/class-wp-config-sync-yml.php';
 
 		$this->loader = new Wp_Config_Sync_Loader();
 

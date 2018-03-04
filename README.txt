@@ -1,6 +1,6 @@
 === WP Config Sync ===
 Contributors: mr_pablo
-Donate link: http://example.com/
+Donate link: https://monzo.me/paulcanning
 Tags: wp_options, options, config, sync, wp-cli, cli
 Requires at least: 4.0
 Tested up to: 4.9.4

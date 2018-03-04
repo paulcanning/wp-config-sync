@@ -1,12 +1,11 @@
-=== Plugin Name ===
-Contributors: (this should be a list of wordpress.org userid's)
+=== WP Config Sync ===
+Contributors: mr_pablo
 Donate link: http://example.com/
-Tags: comments, spam
-Requires at least: 3.0.1
-Tested up to: 3.4
-Stable tag: 4.3
-License: GPLv2 or later
-License URI: http://www.gnu.org/licenses/gpl-2.0.html
+Tags: wp_options, options, config, sync, wp-cli, cli
+Requires at least: 4.0
+Tested up to: 4.9.4
+License: GPLv3 or later
+License URI: http://www.gnu.org/licenses/gpl.html
 
 Export and import your wp_options table using WP CLI. Opiotns are stored in a YAML file to be included in source control.
 
@@ -22,16 +21,6 @@ a continuous integration deployment process.
 1. Install WP CLI
 2. Install WP Config Sync
 3. In the command line, use `wp config-sync export` and ``wp config-sync import` to either export or import your wp_options table
-
-== Frequently Asked Questions ==
-
-= A question that someone might have =
-
-An answer to that question.
-
-= What about foo bar? =
-
-Answer to foo bar dilemma.
 
 == Changelog ==
 
